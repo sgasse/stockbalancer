@@ -1,0 +1,42 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="assets/style.css">
+
+    <title>Paste JSON Data</title>
+</head>
+
+<body>
+    <form action="{{.}}" method="post">
+        <p>Enter portfolio data below:</p>
+        <textarea rows="20", cols="50" name="portfolioData">{
+    "Stocks": [
+        {
+            "WKN": "A1W2EL",
+            "ISIN": "IE00BBQ2W338",
+            "Price": 0.0,
+            "Shares": 140,
+            "GoalRatio": 0.45,
+            "Symbol": "H411.DE"
+        },
+        {
+            "WKN": "A12DPP",
+            "ISIN": "IE00BQN1K901",
+            "Price": 0.0,
+            "Shares": 1400,
+            "GoalRatio": 0.55,
+            "Symbol": "CEMS.DE"
+        }
+    ]
+}</textarea>
+        <br>
+        Reinvest:
+        <input type="text" name="reinvest">
+        <br>
+        <input type="submit" value="Post">
+    </form>
+</body>
+
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="assets/style.css">
+
+    <title>Balancer</title>
+</head>
+
+<body>
+    <p>Rebalanced Portfolio</p>
+    <table style="width:100%">
+        <tr>
+            <th>WKN / Symbol/ ISIN</th>
+            <th>Price [EUR]</th>
+            <th>Shares</th>
+            <th>Goal Ratio</th>
+            <th>New Shares</th>
+            <th>Rebalance Ratio</th>
+            <th>Rebalance Sum</th>
+        </tr>
+        {{range .Portfolio.Stocks}}
+            <tr>
+                <td>{{.WKN}} / {{.Symbol}}<br>{{.ISIN}}</td>
+                <td>{{printf "%.3f" .Price}}</td>
+                <td>{{.Shares}}</td>
+                <td>{{printf "%.3f" .GoalRatio}}</td>
+                <td>{{printf "%.1f" .NewShares}}</td>
+                <td>{{printf "%.3f" .RebalanceRatio}}</td>
+                <td>{{printf "%.2f" .RebalanceSum}}</td>
+            </tr>
+        {{end}}
+    </table>
+    <p>Sum existing stocks: {{printf "%.2f" .Portfolio.SumExisting}}</p>
+    <p>Sum with reinvest: {{printf "%.2f" .Portfolio.SumWithReinvest}}</p>
+</body>
+
+</html>

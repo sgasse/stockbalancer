@@ -1,0 +1,8 @@
+# personal portfolio file
+myPortfolio.json
+
+# price cache
+.priceCache.json
+
+# binary
+stockBalancer

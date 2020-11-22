@@ -1,0 +1,32 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="assets/style.css">
+
+    <title>Balancer</title>
+</head>
+
+<body>
+    <p>Stocks</p>
+    <table style="width:100%">
+        <tr>
+            <th>WKN / Symbol/ ISIN</th>
+            <th>Price [EUR]</th>
+            <th>Shares</th>
+            <th>Goal Ratio</th>
+        </tr>
+        {{range .Portfolio.Stocks}}
+            <tr>
+                <td>{{.WKN}} / {{.Symbol}}<br>{{.ISIN}}</td>
+                <td>{{.Price}}</td>
+                <td>{{.Shares}}</td>
+                <td>{{.GoalRatio}}</td>
+            </tr>
+        {{end}}
+    </table>
+    <p>Sum: {{printf "%.2f" .Portfolio.SumExisting}}</p>
+</body>
+
+</html>
