@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
 	"strconv"
 	"sync"
@@ -32,14 +33,14 @@ type stockPrice struct {
 	GlobalQuote globalQuote `json:"Global Quote"`
 }
 
-var lastCacheWrite = time.Now()
+var queryTimeout = 13 * time.Second
 var cacheFile = ".priceCache.json"
 var priceCache = struct {
 	sync.RWMutex
 	m map[string]stockPrice
 }{m: make(map[string]stockPrice)}
 
-func getPrice(symbol string, avAPIKey string) stockPrice {
+func queryPrice(symbol string, avAPIKey string) stockPrice {
 	url := fmt.Sprintf("https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=%s&apikey=%s",
 		symbol, avAPIKey)
 
@@ -78,15 +79,60 @@ func getPrice(symbol string, avAPIKey string) stockPrice {
 	return price
 }
 
-func updatePriceCache(avAPIKey string) {
-	cwd, pathErr := os.Getwd()
-	if pathErr != nil {
-		fmt.Println(pathErr)
-	}
+func updateSymbol(symbolsToQuery <-chan string, avAPIKey string) {
+	for {
+		symbolToQuery := <-symbolsToQuery
+		priceCache.Lock()
+		priceCache.m[symbolToQuery] = queryPrice(symbolToQuery, avAPIKey)
+		priceCache.Unlock()
+		log.Print("Updated symbol ", symbolToQuery)
 
-	cacheStr, readErr := ioutil.ReadFile(path.Join(cwd, cacheFile))
+		// only 5 queries per minute are allowed
+		time.Sleep(queryTimeout)
+	}
+}
+
+func persistCache(cachePath string, doSleep bool) {
+	for {
+		priceCache.RLock()
+		cacheJSON, jsonErr := json.MarshalIndent(priceCache.m, "", "    ")
+		if jsonErr != nil {
+			fmt.Println(jsonErr)
+		}
+		priceCache.RUnlock()
+
+		ioutil.WriteFile(cachePath, cacheJSON, 0644)
+		log.Print("Wrote cache to ", cachePath)
+
+		if doSleep {
+			time.Sleep(1 * time.Minute)
+		} else {
+			break
+		}
+	}
+}
+
+func checkForOutdated(symbolsToQuery chan<- string) {
+	for {
+		priceCache.RLock()
+		for symbol, sPrice := range priceCache.m {
+			if time.Now().Sub(sPrice.LastQueried) > 24*time.Hour {
+				symbolsToQuery <- symbol
+				log.Print("Enqueuing outdated symbol ", symbol)
+			}
+		}
+		priceCache.RUnlock()
+
+		sleepTime := time.Duration(len(symbolsToQuery)) * queryTimeout
+		log.Print(len(symbolsToQuery), " in the queue, sleeping for ", sleepTime)
+		time.Sleep(sleepTime)
+	}
+}
+
+func loadPriceCache(cachePath string) {
+	cacheStr, readErr := ioutil.ReadFile(cachePath)
 	if readErr != nil {
-		fmt.Println(readErr)
+		log.Print(readErr, ", will continue without loaded cache.")
 	} else {
 		priceCache.Lock()
 		jsonErr := json.Unmarshal(cacheStr, &priceCache.m)
@@ -96,39 +142,29 @@ func updatePriceCache(avAPIKey string) {
 		log.Print("Loaded price cache", priceCache.m)
 		priceCache.Unlock()
 	}
+}
 
-	// endless loop
-	for {
-		// find next symbol to update
-		oldestQuery := time.Now()
-		symbolToQuery := ""
-		priceCache.RLock()
-		for symbol, sPrice := range priceCache.m {
-			if sPrice.LastQueried.Before(oldestQuery) {
-				oldestQuery = sPrice.LastQueried
-				symbolToQuery = symbol
-			}
-		}
-		priceCache.RUnlock()
+func updatePriceCache(avAPIKey string) {
+	var cachePath string
+	cwd, pathErr := os.Getwd()
+	if pathErr != nil {
+		log.Print(pathErr, ", will continue without loading/storing cache.")
+	} else {
+		cachePath = path.Join(cwd, cacheFile)
+		loadPriceCache(cachePath)
+		go persistCache(cachePath, true)
 
-		// only 5 queries per minute are allowed
-		time.Sleep(13 * time.Second)
-
-		if symbolToQuery == "" {
-			continue
-		}
-
-		priceCache.Lock()
-		priceCache.m[symbolToQuery] = getPrice(symbolToQuery, avAPIKey)
-		priceCache.Unlock()
-
-		priceCache.RLock()
-		cacheJSON, jsonErr := json.MarshalIndent(priceCache.m, "", "    ")
-		if jsonErr != nil {
-			fmt.Println(jsonErr)
-		}
-		priceCache.RUnlock()
-
-		ioutil.WriteFile(path.Join(cwd, cacheFile), cacheJSON, 0644)
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
+		go func() {
+			<-c
+			log.Print("Received SIGINT, persisting cache")
+			persistCache(cachePath, false)
+			os.Exit(0)
+		}()
 	}
+
+	symbolsToQuery := make(chan string, 10)
+	go checkForOutdated(symbolsToQuery)
+	go updateSymbol(symbolsToQuery, avAPIKey)
 }
