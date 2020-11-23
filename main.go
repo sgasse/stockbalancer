@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -34,9 +35,15 @@ type dataModel struct {
 
 func restStocksHandler(w http.ResponseWriter, r *http.Request) {
 	tpl := template.Must(template.ParseFiles("html/stockView.html"))
-	p, err := parseStocks(r)
+	body, readErr := ioutil.ReadAll(r.Body)
+	if readErr != nil {
+		http.Error(w, "Could not parse request", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+	p, parseErr := parsePortfolio(body)
 
-	if err != nil {
+	if parseErr != nil {
 		http.Error(w, "Could not parse request", http.StatusBadRequest)
 		return
 	}
@@ -65,6 +72,11 @@ func formHandler(w http.ResponseWriter, r *http.Request, rebalance bool) {
 	} else {
 		r.ParseForm()
 		var p portfolio
+		p, parseErr := parsePortfolio([]byte(r.Form["portfolioData"][0]))
+		if parseErr != nil {
+			http.Error(w, "Could not parse portfolio", http.StatusBadRequest)
+			return
+		}
 		if err := json.Unmarshal([]byte(r.Form["portfolioData"][0]), &p); err != nil {
 			log.Print("Could not unmarshall string.")
 			http.Error(w, "Portfolio data structure not understood - is it valid JSON?", http.StatusBadRequest)
@@ -95,10 +107,10 @@ func formHandler(w http.ResponseWriter, r *http.Request, rebalance bool) {
 	}
 }
 
-func parseStocks(r *http.Request) (portfolio, error) {
+func parsePortfolio(jsonData []byte) (portfolio, error) {
 	var p portfolio
 
-	err := json.NewDecoder(r.Body).Decode(&p)
+	err := json.Unmarshal(jsonData, &p)
 	return p, err
 }
 
