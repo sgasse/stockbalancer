@@ -34,6 +34,22 @@ var portfCache = struct {
 	m map[string][]byte
 }{m: make(map[string][]byte)}
 
+func parsePortfolio(jsonData []byte) (portfolio, error) {
+	var p portfolio
+
+	err := json.Unmarshal(jsonData, &p)
+	return p, err
+}
+
+func updatePortfolioSum(p *portfolio) {
+	p.SumExisting = 0.0
+	for ind := range p.Stocks {
+		curStock := &p.Stocks[ind]
+		curStock.Price = getCachedPrice(curStock.Symbol)
+		p.SumExisting += float64(curStock.Shares) * curStock.Price
+	}
+}
+
 func storePortfolio(p *portfolio) string {
 	pBytes, jsonErr := json.MarshalIndent(*p, "", "    ")
 	if jsonErr != nil {
@@ -49,13 +65,6 @@ func storePortfolio(p *portfolio) string {
 	portfCache.Unlock()
 
 	return pSHA1
-}
-
-func parsePortfolio(jsonData []byte) (portfolio, error) {
-	var p portfolio
-
-	err := json.Unmarshal(jsonData, &p)
-	return p, err
 }
 
 func rebalancePortfolio(p *portfolio, reinvest float64) {
@@ -110,26 +119,5 @@ func rebalancePortfolio(p *portfolio, reinvest float64) {
 		p.SumWithReinvest -= st.Price
 		log.Print("Rounded shares would have been too little, rounded up ", ind, " shares.")
 		return
-	}
-}
-
-func updatePortfolioSum(p *portfolio) {
-	p.SumExisting = 0.0
-	for ind := range p.Stocks {
-		curStock := &p.Stocks[ind]
-		priceCache.RLock()
-		cachedPrice, exists := priceCache.m[curStock.Symbol]
-		priceCache.RUnlock()
-		if exists {
-			priceCache.RLock()
-			curStock.Price = cachedPrice.Price
-			priceCache.RUnlock()
-			p.SumExisting += float64(curStock.Shares) * curStock.Price
-		} else {
-			priceCache.Lock()
-			priceCache.m[curStock.Symbol] = stockPrice{}
-			priceCache.Unlock()
-			p.SumExisting += float64(curStock.Shares) * curStock.Price
-		}
 	}
 }

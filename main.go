@@ -51,8 +51,8 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "URL param 'p' not found.", http.StatusBadRequest)
 		return
 	}
-
 	pSHA1 := pSHA1s[0]
+
 	portfCache.RLock()
 	portStr, ok := portfCache.m[pSHA1]
 	portfCache.RUnlock()
@@ -64,7 +64,6 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(portStr)
-	return
 }
 
 func formHandler(w http.ResponseWriter, r *http.Request, rebalance bool) {
@@ -129,7 +128,7 @@ func main() {
 	if avAPIKey == "" {
 		log.Fatal("You must specify your API key from AlphaVantage as AV_API_KEY.")
 	}
-	go updatePriceCache(avAPIKey)
+	go launchCache(avAPIKey)
 
 	mux := http.NewServeMux()
 

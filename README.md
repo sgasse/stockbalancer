@@ -12,6 +12,7 @@ curl -d '{"Stocks":[{"WKN": "ABC", "Price": 12.34, "Shares": 10, "GoalRatio": 0.
 
 ## Next steps
 - Update REST API.
+- Rewrite persistCache.
 - Update styling with CSS.
 - Validation function for portfolio readout.
 - Better error passing for parsing and validation.
