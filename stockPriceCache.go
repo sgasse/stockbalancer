@@ -123,7 +123,7 @@ func checkForOutdated(symbolsToQuery chan<- string) {
 		}
 		priceCache.RUnlock()
 
-		sleepTime := time.Duration(len(symbolsToQuery)) * queryTimeout
+		sleepTime := time.Duration(len(symbolsToQuery)+1) * queryTimeout
 		log.Print(len(symbolsToQuery), " in the queue, sleeping for ", sleepTime)
 		time.Sleep(sleepTime)
 	}

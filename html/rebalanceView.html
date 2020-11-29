@@ -34,6 +34,12 @@
     </table>
     <p>Sum existing stocks: {{printf "%.2f" .Portfolio.SumExisting}}</p>
     <p>Sum with reinvest: {{printf "%.2f" .Portfolio.SumWithReinvest}}</p>
+
+    <p>
+        <form action='{{.DlLink}}' method="post">
+            <input type="submit" value="Download" />
+        </form>
+    </p>
 </body>
 
 </html>

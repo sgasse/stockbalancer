@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -10,27 +11,9 @@ import (
 	"strconv"
 )
 
-type stock struct {
-	WKN             string  `json:"WKN"`
-	ISIN            string  `json:"ISIN"`
-	Symbol          string  `json:"Symbol"`
-	Shares          int     `json:"Shares"`
-	Price           float64 `json:"Price"`
-	GoalRatio       float64 `json:"GoalRatio"`
-	NewShares       float64 `json:"NewShares"`
-	RebalanceRatio  float64 `json:"RebalanceRatio"`
-	RebalanceSum    float64 `json:"RebalanceSum"`
-	pricePerPartial float64
-}
-
-type portfolio struct {
-	Stocks          []stock
-	SumExisting     float64
-	SumWithReinvest float64
-}
-
 type dataModel struct {
 	Portfolio portfolio
+	DlLink    string
 }
 
 func restStocksHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +41,30 @@ func dispHandler(w http.ResponseWriter, r *http.Request) {
 
 func rebalanceHandler(w http.ResponseWriter, r *http.Request) {
 	formHandler(w, r, true)
+}
+
+func downloadHandler(w http.ResponseWriter, r *http.Request) {
+	pSHA1s, ok := r.URL.Query()["p"]
+
+	if !ok || len(pSHA1s[0]) < 1 {
+		log.Print("URL param 'p' not found.")
+		http.Error(w, "URL param 'p' not found.", http.StatusBadRequest)
+		return
+	}
+
+	pSHA1 := pSHA1s[0]
+	portfCache.RLock()
+	portStr, ok := portfCache.m[pSHA1]
+	portfCache.RUnlock()
+	if !ok {
+		log.Print("Portfolio with hash ", pSHA1, " not found.")
+		http.Error(w, "Portfolio hash for download not found.", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(portStr)
+	return
 }
 
 func formHandler(w http.ResponseWriter, r *http.Request, rebalance bool) {
@@ -99,19 +106,17 @@ func formHandler(w http.ResponseWriter, r *http.Request, rebalance bool) {
 				return
 			}
 			rebalancePortfolio(&p, reinvest)
+
+			pSHA1 := storePortfolio(&p)
+			log.Print("Portfolio has SHA1: ", pSHA1)
+			link := fmt.Sprintf("http://localhost:3210/download?p=%s", pSHA1)
+
 			t, _ := template.ParseFiles("html/rebalanceView.html")
-			dm := dataModel{Portfolio: p}
+			dm := dataModel{Portfolio: p, DlLink: link}
 			t.Execute(w, dm)
 		}
 
 	}
-}
-
-func parsePortfolio(jsonData []byte) (portfolio, error) {
-	var p portfolio
-
-	err := json.Unmarshal(jsonData, &p)
-	return p, err
 }
 
 func main() {
@@ -133,6 +138,7 @@ func main() {
 	mux.HandleFunc("/rest", restStocksHandler)
 	mux.HandleFunc("/disp", dispHandler)
 	mux.HandleFunc("/rebalance", rebalanceHandler)
+	mux.HandleFunc("/download", downloadHandler)
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 	http.ListenAndServe(":"+port, mux)
 }
