@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 type dataModel struct {
@@ -17,30 +16,70 @@ type dataModel struct {
 }
 
 func restStocksHandler(w http.ResponseWriter, r *http.Request) {
-	tpl := template.Must(template.ParseFiles("html/stockView.html"))
 	body, readErr := ioutil.ReadAll(r.Body)
 	if readErr != nil {
 		http.Error(w, "Could not parse request", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
-	p, parseErr := parsePortfolio(body)
 
+	p, parseErr := parsePortfolio(body)
 	if parseErr != nil {
 		http.Error(w, "Could not parse request", http.StatusBadRequest)
 		return
 	}
 
-	dm := dataModel{Portfolio: p}
-	tpl.Execute(w, dm)
+	updatePortfolioSum(&p)
+
+	if p.Reinvest != 0.0 {
+		rebalancePortfolio(&p, p.Reinvest)
+	}
+
+	pBytes, jsonErr := json.MarshalIndent(p, "", "    ")
+	if jsonErr != nil {
+		log.Print("Could not encode portfolio.")
+		http.Error(w, "Could not parse request", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(pBytes)
 }
 
-func dispHandler(w http.ResponseWriter, r *http.Request) {
-	formHandler(w, r, false)
-}
+func portfolioHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		// GET
+		t, _ := template.ParseFiles("html/inputForm.html")
+		t.Execute(w, nil)
+	} else {
+		// POST
+		r.ParseForm()
+		p, parseErr := parsePortfolio([]byte(r.Form["portfolioData"][0]))
+		if parseErr != nil {
+			log.Print(parseErr)
+			http.Error(w, "Could not parse portfolio", http.StatusBadRequest)
+			return
+		}
+		updatePortfolioSum(&p)
 
-func rebalanceHandler(w http.ResponseWriter, r *http.Request) {
-	formHandler(w, r, true)
+		if p.Reinvest == 0.0 {
+			log.Print("Display portfolio")
+			t, _ := template.ParseFiles("html/stockView.html")
+			dm := dataModel{Portfolio: p}
+			t.Execute(w, dm)
+		} else {
+			log.Print("Rebalance portfolio")
+			rebalancePortfolio(&p, p.Reinvest)
+
+			pSHA1 := storePortfolio(&p)
+			log.Print("Portfolio has SHA1: ", pSHA1)
+			link := fmt.Sprintf("http://localhost:3210/download?p=%s", pSHA1)
+
+			t, _ := template.ParseFiles("html/rebalanceView.html")
+			dm := dataModel{Portfolio: p, DlLink: link}
+			t.Execute(w, dm)
+		}
+	}
 }
 
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,58 +105,6 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(portStr)
 }
 
-func formHandler(w http.ResponseWriter, r *http.Request, rebalance bool) {
-	log.Print("formHandler called with method:", r.Method)
-	if r.Method == "GET" {
-		t, _ := template.ParseFiles("html/inputForm.html")
-		if rebalance {
-			t.Execute(w, "/rebalance")
-		} else {
-			t.Execute(w, "/disp")
-		}
-	} else {
-		r.ParseForm()
-		var p portfolio
-		p, parseErr := parsePortfolio([]byte(r.Form["portfolioData"][0]))
-		if parseErr != nil {
-			http.Error(w, "Could not parse portfolio", http.StatusBadRequest)
-			return
-		}
-		if err := json.Unmarshal([]byte(r.Form["portfolioData"][0]), &p); err != nil {
-			log.Print("Could not unmarshall string.")
-			http.Error(w, "Portfolio data structure not understood - is it valid JSON?", http.StatusBadRequest)
-			return
-		}
-
-		updatePortfolioSum(&p)
-
-		if !rebalance {
-			// Display existing portfolio
-			t, _ := template.ParseFiles("html/stockView.html")
-			dm := dataModel{Portfolio: p}
-			t.Execute(w, dm)
-		} else {
-			// Calculate rebalancing and different view
-			reinvest, floatErr := strconv.ParseFloat(r.Form["reinvest"][0], 64)
-			if floatErr != nil {
-				log.Print("Could not parse float")
-				http.Error(w, "Invalid value for reinvest", http.StatusBadRequest)
-				return
-			}
-			rebalancePortfolio(&p, reinvest)
-
-			pSHA1 := storePortfolio(&p)
-			log.Print("Portfolio has SHA1: ", pSHA1)
-			link := fmt.Sprintf("http://localhost:3210/download?p=%s", pSHA1)
-
-			t, _ := template.ParseFiles("html/rebalanceView.html")
-			dm := dataModel{Portfolio: p, DlLink: link}
-			t.Execute(w, dm)
-		}
-
-	}
-}
-
 func main() {
 	port := os.Getenv("BALANCER_PORT")
 	if port == "" {
@@ -134,9 +121,8 @@ func main() {
 
 	fs := http.FileServer(http.Dir("assets"))
 
-	mux.HandleFunc("/rest", restStocksHandler)
-	mux.HandleFunc("/disp", dispHandler)
-	mux.HandleFunc("/rebalance", rebalanceHandler)
+	mux.HandleFunc("/restPortfolio", restStocksHandler)
+	mux.HandleFunc("/portfolio", portfolioHandler)
 	mux.HandleFunc("/download", downloadHandler)
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 	http.ListenAndServe(":"+port, mux)

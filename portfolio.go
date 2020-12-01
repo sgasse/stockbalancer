@@ -10,6 +10,15 @@ import (
 	"sync"
 )
 
+type customErr struct {
+	debugMsg  string
+	publicMsg string
+}
+
+func (c customErr) Error() string {
+	return c.publicMsg
+}
+
 type stock struct {
 	WKN             string  `json:"WKN"`
 	ISIN            string  `json:"ISIN"`
@@ -25,6 +34,7 @@ type stock struct {
 
 type portfolio struct {
 	Stocks          []stock
+	Reinvest        float64
 	SumExisting     float64
 	SumWithReinvest float64
 }
@@ -34,10 +44,29 @@ var portfCache = struct {
 	m map[string][]byte
 }{m: make(map[string][]byte)}
 
-func parsePortfolio(jsonData []byte) (portfolio, error) {
-	var p portfolio
+func parsePortfolio(jsonData []byte) (p portfolio, err error) {
+	err = json.Unmarshal(jsonData, &p)
+	if err != nil {
+		return
+	}
 
-	err := json.Unmarshal(jsonData, &p)
+	ratioSum := 0.0
+	for _, st := range p.Stocks {
+		ratioSum += st.GoalRatio
+
+		if st.GoalRatio <= 0.0 {
+			msg := fmt.Sprint("ISIN ", st.ISIN, ": GoalRatio = ", st.GoalRatio, " <= 0.0")
+			err = customErr{publicMsg: msg}
+			return
+		}
+
+	}
+	if ratioSum != 1.0 {
+		msg := fmt.Sprint("Sum of stocks GoalRatio = ", ratioSum, " != 1.0")
+		err = customErr{publicMsg: msg}
+		return
+	}
+
 	return p, err
 }
 

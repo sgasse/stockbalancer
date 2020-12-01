@@ -9,9 +9,9 @@
 </head>
 
 <body>
-    <form action="{{.}}" method="post">
-        <p>Enter portfolio data below:</p>
-        <textarea rows="20", cols="50" name="portfolioData">{
+    <form method="post">
+        <p>Enter portfolio data below. Trigger rebalancing with a `Reinvest` value > 0.0</p>
+        <textarea rows="25", cols="50" name="portfolioData">{
     "Stocks": [
         {
             "WKN": "A1W2EL",
@@ -29,11 +29,9 @@
             "GoalRatio": 0.55,
             "Symbol": "CEMS.DE"
         }
-    ]
+    ],
+    "Reinvest": 0.0
 }</textarea>
-        <br>
-        Reinvest:
-        <input type="text" name="reinvest">
         <br>
         <input type="submit" value="Post">
     </form>

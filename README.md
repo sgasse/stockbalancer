@@ -7,14 +7,13 @@ This repository contains code for a microservice which balances out a stock port
 ## REST API
 Example query:
 ```
-curl -d '{"Stocks":[{"WKN": "ABC", "Price": 12.34, "Shares": 10, "GoalRatio": 0.5}]}' -H "Content-Type: application/json" -X POST http://localhost:3210/disp
+curl -d '{"Stocks": [{"WKN": "A1W2EL", "ISIN": "IE00BBQ2W338", "Price": 0.0, "Shares": 140, "GoalRatio": 0.45, "Symbol": "H411.DE"}, {"WKN": "A12DPP", "ISIN": "IE00BQN1K901", "Price": 0.0, "Shares": 1400, "GoalRatio": 0.55, "Symbol": "CEMS.DE"}], "Reinvest": 3000.0}' -H "Content-Type: application/json" -X POST http://localhost:3210/restPortfolio
 ```
 
 ## Next steps
-- Update REST API.
 - Rewrite persistCache.
+- Add current ratio.
 - Update styling with CSS.
-- Validation function for portfolio readout.
 - Better error passing for parsing and validation.
 - Test code for the balancing algorithm.
 - Retrieve symbols from ISIN.
