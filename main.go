@@ -29,8 +29,6 @@ func restStocksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatePortfolioSum(&p)
-
 	if p.Reinvest != 0.0 {
 		rebalancePortfolio(&p, p.Reinvest)
 	}
@@ -60,7 +58,6 @@ func portfolioHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not parse portfolio", http.StatusBadRequest)
 			return
 		}
-		updatePortfolioSum(&p)
 
 		if p.Reinvest == 0.0 {
 			log.Print("Display portfolio")

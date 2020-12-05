@@ -25,6 +25,7 @@ type stock struct {
 	Symbol          string  `json:"Symbol"`
 	Shares          int     `json:"Shares"`
 	Price           float64 `json:"Price"`
+	CurRatio        float64 `json:"CurrentRatio"`
 	GoalRatio       float64 `json:"GoalRatio"`
 	NewShares       float64 `json:"NewShares"`
 	RebalanceRatio  float64 `json:"RebalanceRatio"`
@@ -67,15 +68,22 @@ func parsePortfolio(jsonData []byte) (p portfolio, err error) {
 		return
 	}
 
+	updatePortfolioValues(&p)
+
 	return p, err
 }
 
-func updatePortfolioSum(p *portfolio) {
+func updatePortfolioValues(p *portfolio) {
 	p.SumExisting = 0.0
 	for ind := range p.Stocks {
 		curStock := &p.Stocks[ind]
 		curStock.Price = getCachedPrice(curStock.Symbol)
 		p.SumExisting += float64(curStock.Shares) * curStock.Price
+	}
+
+	for ind := range p.Stocks {
+		curStock := &p.Stocks[ind]
+		curStock.CurRatio = (curStock.Price * float64(curStock.Shares)) / p.SumExisting
 	}
 }
 
@@ -97,9 +105,6 @@ func storePortfolio(p *portfolio) string {
 }
 
 func rebalancePortfolio(p *portfolio, reinvest float64) {
-	// Calculate portfolio value
-	updatePortfolioSum(p)
-
 	goalSum := p.SumExisting + reinvest
 	p.SumWithReinvest = p.SumExisting
 	for ind := range p.Stocks {

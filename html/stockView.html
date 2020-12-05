@@ -3,30 +3,32 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/displayStyle.css">
 
     <title>Balancer</title>
 </head>
 
 <body>
-    <p>Stocks</p>
+    <h1>Stocks</h1>
     <table style="width:100%">
         <tr>
-            <th>WKN / Symbol/ ISIN</th>
-            <th>Price [EUR]</th>
+            <th>WKN / Symbol / ISIN</th>
+            <th>Price</th>
             <th>Shares</th>
+            <th>Current Ratio</th>
             <th>Goal Ratio</th>
         </tr>
         {{range .Portfolio.Stocks}}
             <tr>
-                <td>{{.WKN}} / {{.Symbol}}<br>{{.ISIN}}</td>
-                <td>{{.Price}}</td>
+                <td>{{.WKN}}<br>{{.Symbol}}<br>{{.ISIN}}</td>
+                <td>{{printf "%.2f" .Price}} €</td>
                 <td>{{.Shares}}</td>
-                <td>{{.GoalRatio}}</td>
+                <td>{{printf "%.3f" .CurRatio}}</td>
+                <td>{{printf "%.3f" .GoalRatio}}</td>
             </tr>
         {{end}}
     </table>
-    <p>Sum: {{printf "%.2f" .Portfolio.SumExisting}}</p>
+    <p><b>Sum: {{printf "%.2f" .Portfolio.SumExisting}} €</b></p>
 </body>
 
 </html>

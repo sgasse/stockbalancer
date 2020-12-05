@@ -11,8 +11,6 @@ curl -d '{"Stocks": [{"WKN": "A1W2EL", "ISIN": "IE00BBQ2W338", "Price": 0.0, "Sh
 ```
 
 ## Next steps
-- Add current ratio.
-- Update styling with CSS.
 - Better error passing for parsing and validation.
 - Test code for the balancing algorithm.
 - Retrieve symbols from ISIN.

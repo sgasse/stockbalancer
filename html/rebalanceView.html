@@ -3,18 +3,19 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/rebalanceStyle.css">
 
     <title>Balancer</title>
 </head>
 
 <body>
-    <p>Rebalanced Portfolio</p>
+    <h1>Rebalanced Portfolio</h1>
     <table style="width:100%">
         <tr>
-            <th>WKN / Symbol/ ISIN</th>
-            <th>Price [EUR]</th>
+            <th>WKN / Symbol / ISIN</th>
+            <th>Price</th>
             <th>Shares</th>
+            <th>Current Ratio</th>
             <th>Goal Ratio</th>
             <th>New Shares</th>
             <th>Rebalance Ratio</th>
@@ -22,9 +23,10 @@
         </tr>
         {{range .Portfolio.Stocks}}
             <tr>
-                <td>{{.WKN}} / {{.Symbol}}<br>{{.ISIN}}</td>
-                <td>{{printf "%.3f" .Price}}</td>
+                <td>{{.WKN}}<br>{{.Symbol}}<br>{{.ISIN}}</td>
+                <td>{{printf "%.2f" .Price}} €</td>
                 <td>{{.Shares}}</td>
+                <td>{{printf "%.3f" .CurRatio}}</td>
                 <td>{{printf "%.3f" .GoalRatio}}</td>
                 <td>{{printf "%.1f" .NewShares}}</td>
                 <td>{{printf "%.3f" .RebalanceRatio}}</td>
@@ -32,8 +34,8 @@
             </tr>
         {{end}}
     </table>
-    <p>Sum existing stocks: {{printf "%.2f" .Portfolio.SumExisting}}</p>
-    <p>Sum with reinvest: {{printf "%.2f" .Portfolio.SumWithReinvest}}</p>
+    <p><b>Sum existing stocks: {{printf "%.2f" .Portfolio.SumExisting}} €</b></p>
+    <p><b>Sum with reinvest: {{printf "%.2f" .Portfolio.SumWithReinvest}} €</b></p>
 
     <p>
         <form action='{{.DlLink}}' method="post">
