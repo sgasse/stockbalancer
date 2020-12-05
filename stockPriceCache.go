@@ -59,14 +59,14 @@ func launchCache(inAvAPIKey string) {
 			go getCachedPrice(symbol)
 		}
 
-		go persistCache(cachePath, true)
+		go persistCachePeriodically(cachePath, 1*time.Minute)
 
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt)
 		go func() {
 			<-c
 			log.Print("Received SIGINT, persisting cache")
-			persistCache(cachePath, false)
+			persistCache(cachePath)
 			os.Exit(0)
 		}()
 	}
@@ -144,24 +144,24 @@ func loadPriceCache(cachePath string) {
 	}
 }
 
-func persistCache(cachePath string, doSleep bool) {
+func persistCachePeriodically(cachePath string, timeout time.Duration) {
 	for {
-		priceCache.RLock()
-		cacheJSON, jsonErr := json.MarshalIndent(priceCache.m, "", "    ")
-		if jsonErr != nil {
-			fmt.Println(jsonErr)
-		}
-		priceCache.RUnlock()
-
-		ioutil.WriteFile(cachePath, cacheJSON, 0644)
-		log.Print("Wrote cache to ", cachePath)
-
-		if doSleep {
-			time.Sleep(1 * time.Minute)
-		} else {
-			break
-		}
+		persistCache(cachePath)
+		time.Sleep(timeout)
 	}
+}
+
+func persistCache(cachePath string) {
+	priceCache.RLock()
+	cacheJSON, jsonErr := json.MarshalIndent(priceCache.m, "", "    ")
+	priceCache.RUnlock()
+	if jsonErr != nil {
+		fmt.Println(jsonErr)
+		return
+	}
+
+	ioutil.WriteFile(cachePath, cacheJSON, 0644)
+	log.Print("Wrote cache to ", cachePath)
 }
 
 func limitRate() {

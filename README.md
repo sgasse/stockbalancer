@@ -11,7 +11,6 @@ curl -d '{"Stocks": [{"WKN": "A1W2EL", "ISIN": "IE00BBQ2W338", "Price": 0.0, "Sh
 ```
 
 ## Next steps
-- Rewrite persistCache.
 - Add current ratio.
 - Update styling with CSS.
 - Better error passing for parsing and validation.
