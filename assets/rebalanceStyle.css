@@ -1,10 +1,7 @@
+/* general */
+
 body {
     font-family: 'Arial';
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
 }
 
 /* render table with zebra striping */
@@ -12,58 +9,51 @@ tr:nth-of-type(odd) {
     background: lightblue;
 }
 
+/* table head in white/black */
 th {
     background: #333;
     color: white;
     font-weight: bold;
 }
 
-td, th {
-    padding: 6px;
+/* mobile first */
+/* display table elements in blocks below each other */
+table, thead, tbody, th, td, tr {
+    display:block;
+}
+
+/* hide table headers in an accessibility-friendly way */
+thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+}
+
+tr {
     border: 1px solid #ccc;
-    text-align: left;
 }
 
-
-@media only screen and (max-width: 760px), (min-device-width: 768px) and (max-device-width: 1024px) {
-    table, thead, tbody, th, td, tr {
-        display: block;
-    }
-
-    /* hide table headers in an accessibility-friendly way */
-    thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-    }
-
-    tr {
-        border: 1px solid #ccc;
-    }
-
-    td {
-        border: none;
-        border-bottom: 1px solid #eee;
-        position: relative;
-        padding-left: 50%;
-    }
-
-    td:before {
-        position: absolute;
-        top: 6px;
-        left: 6px;
-        width: 45%;
-        padding-right: 10px;
-        white-space: nowrap;
-    }
-
-    /* label every n-th row */
-    td:nth-of-type(1):before { content: "WKN / Symbol / ISIN"; }
-    td:nth-of-type(2):before { content: "Price"; }
-    td:nth-of-type(3):before { content: "Shares"; }
-    td:nth-of-type(4):before { content: "Current Ratio"; }
-    td:nth-of-type(5):before { content: "Goal Ratio"; }
-    td:nth-of-type(6):before { content: "New Shares"; }
-    td:nth-of-type(7):before { content: "Rebalance Ratio"; }
-    td:nth-of-type(8):before { content: "Rebalance Sum"; }
+td {
+    border: none;
+    border-bottom: 1px solid #eee;
+    position: relative;
+    padding-left: 50%;
 }
+
+td:before {
+    position: absolute;
+    left: 6px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+}
+
+/* label every n-th row */
+td:nth-of-type(1):before { content: "WKN / Symbol / ISIN"; }
+td:nth-of-type(2):before { content: "Price"; }
+td:nth-of-type(3):before { content: "Shares"; }
+td:nth-of-type(4):before { content: "Current Ratio"; }
+td:nth-of-type(5):before { content: "Goal Ratio"; }
+td:nth-of-type(6):before { content: "New Shares"; }
+td:nth-of-type(7):before { content: "Rebalanced Ratio"; }
+td:nth-of-type(8):before { content: "Rebalanced Sum"; }

@@ -10,8 +10,16 @@
 
 <body>
     <form method="post">
-        <p>Enter portfolio data below. Trigger rebalancing with a `Reinvest` value > 0.0</p>
-        <textarea rows="25", cols="50" name="portfolioData">{
+        <p>
+            <ul>
+                <li>Enter portfolio data below. An example is given in the text field.</li>
+                <li>The <code>Symbol</code> field has to be set. You can look up symbols for German stocks <a href="https://www.xetra.com/xetra-en/instruments/etf-exchange-traded-funds/list-of-tradable-etfs">here</a>. Just add <code>.DE</code> to the mnemonic.</li>
+                <li>The price will be updated automatically by querying the symbol on <a href="https://www.alphavantage.co/">AlphaVantage</a>.</li>
+                <li>If you want your portfolio to be rebalanced, please set the <code>Reinvest</code> field to something other than <code>0.0</code>.</li>
+                <li>You can also calculate how to withdraw money in a balanced way by setting a negative value for <code>Reinvest</code></li>
+            </ul>
+        </p>
+        <textarea rows="25", cols="45" name="portfolioData">{
     "Stocks": [
         {
             "WKN": "A1W2EL",

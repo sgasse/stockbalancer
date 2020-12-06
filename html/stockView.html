@@ -3,21 +3,22 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="assets/displayStyle.css">
+    <link rel="stylesheet" media="all" href="assets/displayStyle.css">
+    <link rel="stylesheet" media="(min-width: 820px)" href="assets/desktopStyle.css">
 
-    <title>Balancer</title>
+    <title>Portfolio</title>
 </head>
 
 <body>
     <h1>Stocks</h1>
-    <table style="width:100%">
-        <tr>
+    <table>
+        <thead>
             <th>WKN / Symbol / ISIN</th>
             <th>Price</th>
             <th>Shares</th>
             <th>Current Ratio</th>
             <th>Goal Ratio</th>
-        </tr>
+        </thead>
         {{range .Portfolio.Stocks}}
             <tr>
                 <td>{{.WKN}}<br>{{.Symbol}}<br>{{.ISIN}}</td>

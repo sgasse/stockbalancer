@@ -28,8 +28,8 @@ type stock struct {
 	CurRatio        float64 `json:"CurrentRatio"`
 	GoalRatio       float64 `json:"GoalRatio"`
 	NewShares       float64 `json:"NewShares"`
-	RebalanceRatio  float64 `json:"RebalanceRatio"`
-	RebalanceSum    float64 `json:"RebalanceSum"`
+	RebalancedRatio float64 `json:"RebalancedRatio"`
+	RebalancedSum   float64 `json:"RebalancedSum"`
 	pricePerPartial float64
 }
 
@@ -113,8 +113,8 @@ func rebalancePortfolio(p *portfolio, reinvest float64) {
 		shareGoalSum := goalSum * st.GoalRatio
 		st.pricePerPartial = st.Price / shareGoalSum
 		st.NewShares = math.Round((shareGoalSum / st.Price) - float64(st.Shares))
-		st.RebalanceSum = (float64(st.Shares) + st.NewShares) * st.Price
-		st.RebalanceRatio = st.RebalanceSum / goalSum
+		st.RebalancedSum = (float64(st.Shares) + st.NewShares) * st.Price
+		st.RebalancedRatio = st.RebalancedSum / goalSum
 		p.SumWithReinvest += st.NewShares * st.Price
 	}
 
@@ -129,8 +129,8 @@ func rebalancePortfolio(p *portfolio, reinvest float64) {
 		for p.SumWithReinvest > goalSum {
 			st := &p.Stocks[ind]
 			st.NewShares -= 1.0
-			st.RebalanceSum = (float64(st.Shares) + st.NewShares) * st.Price
-			st.RebalanceRatio = st.RebalanceSum / goalSum
+			st.RebalancedSum = (float64(st.Shares) + st.NewShares) * st.Price
+			st.RebalancedRatio = st.RebalancedSum / goalSum
 			p.SumWithReinvest -= st.Price
 			ind++
 		}
@@ -139,8 +139,8 @@ func rebalancePortfolio(p *portfolio, reinvest float64) {
 		for p.SumWithReinvest < goalSum {
 			st := &p.Stocks[ind]
 			st.NewShares += 1.0
-			st.RebalanceSum = (float64(st.Shares) + st.NewShares) * st.Price
-			st.RebalanceRatio = st.RebalanceSum / goalSum
+			st.RebalancedSum = (float64(st.Shares) + st.NewShares) * st.Price
+			st.RebalancedRatio = st.RebalancedSum / goalSum
 			p.SumWithReinvest += st.Price
 			ind++
 		}
@@ -148,8 +148,8 @@ func rebalancePortfolio(p *portfolio, reinvest float64) {
 		ind--
 		st := &p.Stocks[ind]
 		st.NewShares -= 1.0
-		st.RebalanceSum = (float64(st.Shares) + st.NewShares) * st.Price
-		st.RebalanceRatio = st.RebalanceSum / goalSum
+		st.RebalancedSum = (float64(st.Shares) + st.NewShares) * st.Price
+		st.RebalancedRatio = st.RebalancedSum / goalSum
 		p.SumWithReinvest -= st.Price
 		log.Print("Rounded shares would have been too little, rounded up ", ind, " shares.")
 		return

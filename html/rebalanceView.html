@@ -3,24 +3,25 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" href="assets/rebalanceStyle.css">
+    <link rel="stylesheet" media="all" href="assets/rebalanceStyle.css">
+    <link rel="stylesheet" media="(min-width: 820px)" href="assets/desktopStyle.css">
 
-    <title>Balancer</title>
+    <title>Rebalanced Portfolio</title>
 </head>
 
 <body>
     <h1>Rebalanced Portfolio</h1>
-    <table style="width:100%">
-        <tr>
+    <table>
+        <thead>
             <th>WKN / Symbol / ISIN</th>
             <th>Price</th>
             <th>Shares</th>
             <th>Current Ratio</th>
             <th>Goal Ratio</th>
             <th>New Shares</th>
-            <th>Rebalance Ratio</th>
-            <th>Rebalance Sum</th>
-        </tr>
+            <th>Rebalanced Ratio</th>
+            <th>Rebalanced Sum</th>
+        </thead>
         {{range .Portfolio.Stocks}}
             <tr>
                 <td>{{.WKN}}<br>{{.Symbol}}<br>{{.ISIN}}</td>
